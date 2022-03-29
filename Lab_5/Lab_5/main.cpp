@@ -41,7 +41,7 @@ void SavePNMImage(Image *, char *);
  Basic DFT & iDFT
  */
 Complex *DFT(Image *image);
-Complex *IDFT(Complex *complexArr, int width, int height);
+int *IDFT(Complex *complexArr, int width, int height);
 Image *FourierSpectrum(Complex *complexArr, int width, int height, int enhance);
 Image *PhaseAngle(Complex *complexArr, int width, int height);
 /*
@@ -50,23 +50,44 @@ Image *PhaseAngle(Complex *complexArr, int width, int height);
 Image *DFTPhaseAngle(Image *image);
 Image *DFTMagnitude(Image *image, int enhance);
 
+Image *GenerateImage(int *imageDate, int width, int height) {
+
+    char comment[] = "# New Image";
+    Image *image = CreateNewImage(GRAY, width, height, comment);
+    unsigned char *data = image->data;
+    
+    for (int i = 0; i < (width*height); i++) {
+        data[i] = imageDate[i];
+    }
+    
+    return image;
+}
+
 
 int main(int argc, const char * argv[]) {
     
     
     Image *image1, *image2, *imageLena;
     
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Lab_5/Lab_5/lena.pgm";
+    char lena[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/PR2.pgm";
     imageLena = ReadPNMImage(lena);
 
-    image1 = DFTMagnitude(imageLena, 50);
-    image2 = DFTPhaseAngle(imageLena);
+    Complex *complexArr;
+    complexArr = DFT(imageLena);
+
+    int width = imageLena->Width;
+    int height = imageLena->Height;
+    int *realPart;
     
-    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Lab_5/Lab_5/DFT_M.pgm";
-    char savePath2[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Lab_5/Lab_5/DFT_P.pgm";
+    realPart = IDFT(complexArr, width, height);
+    image1 = GenerateImage(realPart, width, height);
+    
+    
+    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/PR2_Inverse.pgm";
+//    char savePath2[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Lab_5/Lab_5/DFT_P.pgm";
     
     SavePNMImage(image1, savePath1);
-    SavePNMImage(image2, savePath2);
+//    SavePNMImage(image2, savePath2);
  
     return 0;
 }
@@ -136,10 +157,34 @@ Image *PhaseAngle(Complex *complexArr, int width, int height) {
     return image;
 }
 
-Complex *IDFT(Complex *complexArr, int width, int height) {
+int *IDFT(Complex *complexArr, int width, int height) {
+    int *outpurArr = (int*)malloc(sizeof(int) * width * height);
+
+    double real, temp;
+
+    for (int u = 0; u < width; u++) {
+        for (int v = 0; v < height; v++) {
+            real = 0;
+            // IDFT Function
+            for (int m = 0; m < width; m++) {
+                for (int n = 0; n < height; n++) {
+                    temp = (double)u * m / (double)width + (double)v * n / (double)height;
+
+                    real += complexArr[m * width + n].real * cos(2 * PI * temp) - complexArr[m * width + n].imag * sin(2 * PI * temp);
+                }
+            }
+            // Inject into outputArr
+            outpurArr[u * width + v] = int(round(real));
+            if (outpurArr[u * width + v] > 255) {
+                outpurArr[u * width + v] = 255;
+            } else if (outpurArr[u * width + v] < 0) {
+                outpurArr[u * width + v] = 0;
+            }
+            
+        }
+    }
     
-    
-    return complexArr;
+    return outpurArr;
 }
 
 Complex *DFT(Image *image) {
