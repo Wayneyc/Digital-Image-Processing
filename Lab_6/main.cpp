@@ -6,9 +6,9 @@
 //
 
 // for mac
-// #include <sys/malloc.h>
+#include <sys/malloc.h>
 // for windows
-#include <malloc.h>
+// #include <malloc.h>
 
 #include <complex.h>
 
