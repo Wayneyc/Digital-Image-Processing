@@ -6,9 +6,9 @@
 //
 
 // for mac
-// #include <sys/malloc.h>
+#include <sys/malloc.h>
 // for windows
-#include <malloc.h>
+// #include <malloc.h>
 
 #include <complex.h>
 
@@ -74,14 +74,14 @@ int main(int argc, const char * argv[]) {
     
     Image *image1, *imageLena;
     
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/lena.pgm";
+    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_5/Lab_5/lena.pgm";
     imageLena = ReadPNMImage(lena);
 
     // image1 = DFTResult(imageLena, 0);
     // image1 = DFTPhaseAngle(imageLena);
     image1 = DFTMagnitude(imageLena, 100);
     
-    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/lena_DFT_magnitude.pgm";
+    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_5/Lab_5/Tesing.pgm";
     
     SavePNMImage(image1, savePath1);
  

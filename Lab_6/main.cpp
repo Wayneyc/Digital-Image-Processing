@@ -21,265 +21,159 @@
 #include <iostream>
 #include "proto.h"
 
+using namespace std;
+
 #define PI 3.141592653589793
 
 /*
- Define the structure "Complex"
+ Basic Method
  */
-typedef struct Complex {
-    double real;
-    double imag;
-} complex;
-
+Complex *DFT(int *imageArr, int width, int height);
+double *FourierSpectrum(Complex *imageArr, int width, int height);
 /*
- Basic Operation
+ Support Method
  */
-Image *ReadPNMImage(char *filename);
+int *CenterTranslation(int *image, int width, int height);
+Image *GenerateImage(double *imageArr, int width, int height);
+/*
+ Image Method
+ */
 Image *CreateNewImage(int type, int width, int height, char *comment);
-void SavePNMImage(Image *, char *);
+Image *ReadPNMImage(char *filename);
+void SavePNMImage(Image *temp_image, char *filename);
 /*
- Basic DFT & iDFT
+ Functions
  */
-Complex *DFT(Image *image);
-int *IDFT(Complex *complexArr, int width, int height);
-Image *FourierSpectrum(Complex *complexArr, int width, int height, int enhance);
-Image *PhaseAngle(Complex *complexArr, int width, int height);
-/*
- Reconstruct from DFT
- */
-Image *DFTResult(Image *image, int type); // type: real->0, imaginary->1
-Image *DFTPhaseAngle(Image *image);
-Image *DFTMagnitude(Image *image, int enhance);
-/*
- Support functions
- */
-Image *GenerateImage(int *imageDate, int width, int height);
-
-
-Image *Test(Image *image) {
-    int width = image->Width;
-    int height = image->Height;
-    unsigned char *data = image->data;
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-            data[i * width + j] = int(round(data[i * width + j] * pow(-1, i+j) * pow(-1, i+j)));
-        }
-    }
-    return image;
-};
+void ShowDFT(Image *image);
 
 
 int main(int argc, const char * argv[]) {
     
-    
-    Image *image1, *imageLena;
-    
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/lena.pgm";
-    imageLena = ReadPNMImage(lena);
+    printf("Hello DFT ...\n");
 
-    // image1 = DFTResult(imageLena, 0);
-    // image1 = DFTPhaseAngle(imageLena);
-    image1 = DFTMagnitude(imageLena, 100);
-    
-    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Codes/Lab_5/Lab_5/lena_DFT_magnitude.pgm";
-    
-    SavePNMImage(image1, savePath1);
+    Image *lenaImage;
+    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena.pgm";
+    lenaImage = ReadPNMImage(lena);
+
+    ShowDFT(lenaImage);
  
     return 0;
 }
 
-Image *DFTResult(Image *image, int type) {
+void ShowDFT(Image *image) {
 
-    Image *outImage;
-    
-    Complex *complexArr;
-    
-    complexArr = DFT(image);
+    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_save.pgm";
 
     int width = image->Width;
     int height = image->Height;
-
-    int resultArr[width*height];
-
-    int enhance = 1;
-
-    for (int i = 0; i < width*height; i++) {
-        if (type == 0) {
-            resultArr[i] = int(round(complexArr[i].real * enhance));
-        } else {
-            resultArr[i] = int(round(complexArr[i].imag * enhance));
-        }
-    }
-
-    outImage = GenerateImage(resultArr, width, height);
-
-    return outImage;
-}
-
-Image *DFTMagnitude(Image *image, int enhance) {
-    
-    Image *outImage;
-    
-    Complex *complexArr;
-    
-    complexArr = DFT(image);
-    
-    outImage = FourierSpectrum(complexArr, image->Width, image->Height, enhance);
-    
-    return outImage;
-}
-
-Image *DFTPhaseAngle(Image *image) {
-    
-    Image *outImage;
-    
-    Complex *complexArr;
-    
-    complexArr = DFT(image);
-    
-    outImage = PhaseAngle(complexArr, image->Width, image->Height);
-    
-    return outImage;
-}
-
-Image *FourierSpectrum(Complex *complexArr, int width, int height, int enhance) {
-    
-    // New image
-    char comment[] = "# Fourier Spectrum";
-    Image *image = CreateNewImage(GRAY, width, height, comment);
     unsigned char *imageData = image->data;
-    
-    // To reinforce the image
-    int reinforce = enhance;
-    
-    for (int u = 0; u < width; u++) {
-        for (int v = 0; v < height; v++) {
-            double real = complexArr[u * width + v].real * reinforce;
-            double imag = complexArr[u * width + v].imag * reinforce;
-            imageData[u * width + v] = int(round(sqrt(real*real + imag*imag)));
 
-            if (imageData[u * width + v] > 255) {
-                imageData[u * width + v] = 255;
-            } else if (imageData[u * width + v] < 0) {
-                imageData[u * width + v] = 0;
+    // Read image into int array
+    int *intImageData = (int *)malloc(sizeof(int) * width * height);
+    for (int k = 0; k < (width * height); k++) {
+        intImageData[k] = imageData[k];
+    }
+
+    int *centeredArr = CenterTranslation(intImageData, width, height);
+
+    Complex *imageArr = DFT(centeredArr, width, height);
+
+    double *spectrumArr = FourierSpectrum(imageArr, width, height);
+
+    Image *outputImage = GenerateImage(spectrumArr, width, height);
+
+    SavePNMImage(outputImage, savePath);
+}
+
+Complex *DFT(int *imageArr, int width, int height) {
+
+    Complex *t = (Complex *)malloc(sizeof(Complex) * width * height);
+    Complex *g = (Complex *)malloc(sizeof(Complex) * width * height);
+
+    int rows = height;
+    int cols = width;
+
+    // DFT for rows
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int m = 0; m < rows; m++) {
+                double theta = double(-2) * PI * (i * m) / rows;
+                t[i * rows + j].real += imageArr[m * rows + j] * cos(theta);
+                t[i * rows + j].imag += imageArr[m * rows + j] * sin(theta);
             }
         }
     }
-    
-    return image;
-}
 
-Image *PhaseAngle(Complex *complexArr, int width, int height) {
-    
-    // New image
-    char comment[] = "# Phase Angle";
-    Image *image = CreateNewImage(GRAY, width, height, comment);
-    unsigned char *imageData = image->data;
-    
-    for (int u = 0; u < width; u++) {
-        for (int v = 0; v < height; v++) {
-            double real = complexArr[u * width + v].real;
-            double imag = complexArr[u * width + v].imag;
-            imageData[u * width + v] = int(round(pow(tan(imag/real), -1)));
-
-            if (imageData[u * width + v] > 255) {
-                imageData[u * width + v] = 255;
-            } else if (imageData[u * width + v] < 0) {
-                imageData[u * width + v] = 0;
+    // DFT for cols
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int n = 0; n < cols; n++) {
+                double theta = double(-2) * PI * (j * n) / cols;
+                g[i * rows + j].real += t[i * rows + n].real * cos(theta) - t[i * rows + n].imag * sin(theta);
+                g[i * rows + j].imag += t[i * rows + n].real * sin(theta) - t[i * rows + n].imag * cos(theta);
             }
         }
     }
-    
-    return image;
-}
 
-int *IDFT(Complex *complexArr, int width, int height) {
-    int *outpurArr = (int*)malloc(sizeof(int) * width * height);
-
-    double real, temp;
-
-    for (int u = 0; u < width; u++) {
-        for (int v = 0; v < height; v++) {
-            real = 0;
-            // IDFT Function
-            for (int m = 0; m < width; m++) {
-                for (int n = 0; n < height; n++) {
-                    temp = (double)u * m / (double)width + (double)v * n / (double)height;
-
-                    real += complexArr[m * width + n].real * cos(2 * PI * temp) - complexArr[m * width + n].imag * sin(2 * PI * temp);
-                }
-            }
-            // Inject into outputArr
-            outpurArr[u * width + v] = int(round(real));
-            if (outpurArr[u * width + v] > 255) {
-                outpurArr[u * width + v] = 255;
-            } else if (outpurArr[u * width + v] < 0) {
-                outpurArr[u * width + v] = 0;
-            }
-            
+    // Divide by image size
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            g[i * rows + j].real /= rows * cols;
+            g[i * rows + j].imag /= rows * cols;
         }
     }
-    
-    return outpurArr;
+
+    return g;
 }
 
-Complex *DFT(Image *image) {
+double *FourierSpectrum(Complex *imageArr, int width, int height) {
     
-    // Original Image
-    int width = image->Width;
-    int height = image->Height;
-    printf("Size: %d %d\n", width, height);
-    unsigned char *imageData = image->data;
-    
-    // Malloc
-    Complex *complexArr;
-    complexArr = (Complex *)malloc(sizeof(Complex) * width * height);
-    
-    // Centralization
-    int tempImage[width*height];
+    double *outputArr = (double *)malloc(sizeof(double) * width * height);
+
+    int rows = height;
+    int cols = width;
+
+    int enhance = 100;
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            double real = imageArr[i * rows + j].real;
+            double imag = imageArr[i * rows + j].imag;
+            outputArr[i * rows + j] = sqrt(real * real + imag * imag) * enhance;
+        }
+    }
+
+    return outputArr;    
+}
+
+int *CenterTranslation(int *imageArr, int width, int height) {
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-            tempImage[i * width + j] = imageData[i * width + j];
-            tempImage[i * width + j] = int(round(tempImage[i * width + j] * pow(-1, i + j)));
+            imageArr[i * width + j] = int(round(imageArr[i * width + j] * pow(-1, i + j)));
         }
     }
-    
-    // DFT
-    for (int u = 0; u < width; u++) {
-        // Check the process
-        printf("DFT: %d/%d\n", u, width-1);
-        for (int v = 0; v < height; v++) {
-            // DFT Function
-            for (int m = 0; m < width; m++) {
-                for (int n = 0; n < height; n++) {
-                    // Real part
-                    complexArr[u * width + v].real += tempImage[m * width + n] * \
-                    cos(double(2)*PI*u*m/width + double(2)*PI*v*n/height) / (width*height);
-                    // Imaginary part
-                    complexArr[u * width + v].imag += tempImage[m * width + n] * \
-                    sin(-(double(2)*PI*u*m/width + double(2)*PI*v*n/height)) / (width*height);
-                }
-            }
-        }
-    }
-    
-    return complexArr;
+    return imageArr;
 }
-
-Image *GenerateImage(int *imageDate, int width, int height) {
-
+    
+Image *GenerateImage(double *imageArr, int width, int height) {
+    // New image
     char comment[] = "# New Image";
     Image *image = CreateNewImage(GRAY, width, height, comment);
-    unsigned char *data = image->data;
-    
-    for (int i = 0; i < (width*height); i++) {
-        data[i] = imageDate[i];
+    unsigned char *imageData = image->data;
+    // Mapping to 0 ~ 255
+    for (int k = 0; k < (width * height); k++) {
+        int intensity = int(round(imageArr[k]));
+        if (intensity > 255) {
+            intensity = 255;
+        } else if (intensity < 0) {
+            intensity = 0;
+        }
+        imageData[k] = intensity;
     }
-    
+
     return image;
 }
 
-    
 
 /* --------------- Previous Functions --------------- */
 
@@ -326,8 +220,6 @@ Image *CreateNewImage(int type, int width, int height, char *comment)
     }
     return (outimage);
 }
-
-/* ------------ Given functions ------------ */
 
 Image *ReadPNMImage(char *filename)
 {
@@ -437,9 +329,9 @@ Image *ReadPNMImage(char *filename)
     /*-----  Debug  ------*/
 
     if (image->Type == GRAY)
-        printf("..Image Type PGM\n");
+        printf(".. Image Type PGM\n");
     else
-        printf("..Image Type PPM Color\n");
+        printf(".. Image Type PPM Color\n");
     /*
   printf("Width %d\n", Width);
   printf("Height %d\n",Height);
