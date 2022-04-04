@@ -29,6 +29,7 @@ using namespace std;
  Basic Method
  */
 Complex *DFT(int *imageArr, int width, int height);
+Complex *IDFT(int *imageArr, int width, int height);
 double *FourierSpectrum(Complex *imageArr, int width, int height);
 /*
  Support Method
@@ -76,7 +77,7 @@ void ShowDFT(Image *image) {
 
     int *centeredArr = CenterTranslation(intImageData, width, height);
 
-    Complex *imageArr = DFT(centeredArr, width, height);
+    Complex *imageArr = DFT(intImageData, width, height);
 
     double *spectrumArr = FourierSpectrum(imageArr, width, height);
 
@@ -93,7 +94,7 @@ Complex *DFT(int *imageArr, int width, int height) {
     int rows = height;
     int cols = width;
 
-    // DFT for rows
+    // DFT for cols
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             for (int m = 0; m < rows; m++) {
@@ -104,13 +105,13 @@ Complex *DFT(int *imageArr, int width, int height) {
         }
     }
 
-    // DFT for cols
+    // DFT for rows
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             for (int n = 0; n < cols; n++) {
                 double theta = double(-2) * PI * (j * n) / cols;
                 g[i * rows + j].real += t[i * rows + n].real * cos(theta) - t[i * rows + n].imag * sin(theta);
-                g[i * rows + j].imag += t[i * rows + n].real * sin(theta) - t[i * rows + n].imag * cos(theta);
+                g[i * rows + j].imag += t[i * rows + n].real * sin(theta) + t[i * rows + n].imag * cos(theta);
             }
         }
     }
@@ -122,6 +123,17 @@ Complex *DFT(int *imageArr, int width, int height) {
             g[i * rows + j].imag /= rows * cols;
         }
     }
+
+    return g;
+}
+
+Complex *IDFT(int *imageArr, int width, int height) {
+
+    Complex *t = (Complex *)malloc(sizeof(Complex) * width * height);
+    Complex *g = (Complex *)malloc(sizeof(Complex) * width * height);
+
+    int rows = height;
+    int cols = width;
 
     return g;
 }
@@ -140,10 +152,11 @@ double *FourierSpectrum(Complex *imageArr, int width, int height) {
             double real = imageArr[i * rows + j].real;
             double imag = imageArr[i * rows + j].imag;
             outputArr[i * rows + j] = sqrt(real * real + imag * imag) * enhance;
+            // outputArr[i * rows + j] = real * enhance;
         }
     }
 
-    return outputArr;    
+    return outputArr;   
 }
 
 int *CenterTranslation(int *imageArr, int width, int height) {

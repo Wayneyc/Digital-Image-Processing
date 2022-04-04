@@ -15,6 +15,9 @@
     "code-runner.executorMap": {
         "c": "gcc $fileName -o build/$fileNameWithoutExt && ./build/$fileNameWithoutExt",
         "cpp": "g++ $fileName -o build/$fileNameWithoutExt && ./build/$fileNameWithoutExt",
+    },
+    "files.associations": {
+        "algorithm": "cpp"
     }
 }
 
