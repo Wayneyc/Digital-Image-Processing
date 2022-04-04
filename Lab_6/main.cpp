@@ -29,7 +29,7 @@ using namespace std;
  Basic Method
  */
 Complex *DFT(int *imageArr, int width, int height);
-Complex *IDFT(int *imageArr, int width, int height);
+double *IDFT(Complex *imageArr, int width, int height);
 double *FourierSpectrum(Complex *imageArr, int width, int height);
 /*
  Support Method
@@ -63,7 +63,7 @@ int main(int argc, const char * argv[]) {
 
 void ShowDFT(Image *image) {
 
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_save.pgm";
+    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_save3.pgm";
 
     int width = image->Width;
     int height = image->Height;
@@ -75,13 +75,15 @@ void ShowDFT(Image *image) {
         intImageData[k] = imageData[k];
     }
 
-    int *centeredArr = CenterTranslation(intImageData, width, height);
+    // int *centeredArr = CenterTranslation(intImageData, width, height);
 
     Complex *imageArr = DFT(intImageData, width, height);
 
-    double *spectrumArr = FourierSpectrum(imageArr, width, height);
+    // double *spectrumArr = FourierSpectrum(imageArr, width, height);
 
-    Image *outputImage = GenerateImage(spectrumArr, width, height);
+    double *retArr = IDFT(imageArr, width, height);
+
+    Image *outputImage = GenerateImage(retArr, width, height);
 
     SavePNMImage(outputImage, savePath);
 }
@@ -93,6 +95,8 @@ Complex *DFT(int *imageArr, int width, int height) {
 
     int rows = height;
     int cols = width;
+
+    printf("Starting DFT ...\n");
 
     // DFT for cols
     for (int i = 0; i < rows; i++) {
@@ -124,16 +128,43 @@ Complex *DFT(int *imageArr, int width, int height) {
         }
     }
 
+    printf("DFT finished\n");
+
     return g;
 }
 
-Complex *IDFT(int *imageArr, int width, int height) {
+double *IDFT(Complex *imageArr, int width, int height) {
 
     Complex *t = (Complex *)malloc(sizeof(Complex) * width * height);
-    Complex *g = (Complex *)malloc(sizeof(Complex) * width * height);
+    double *g = (double *)malloc(sizeof(double) * width * height);
 
     int rows = height;
     int cols = width;
+
+    printf("Starting IDFT ...\n");
+
+    // IDFT for cols
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int m = 0; m < rows; m++) {
+                double theta = double(2) * PI * (i * m) / rows;
+                t[i * rows + j].real += imageArr[m * rows + j].real * cos(theta) - imageArr[m * rows + j].imag * sin(theta);
+                t[i * rows + j].imag += imageArr[m * rows + j].real * sin(theta) + imageArr[m * rows + j].imag * cos(theta);
+            }
+        }
+    }
+
+    // IDFT for rows
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            for (int n = 0; n < cols; n++) {
+                double theta = double(2) * PI * (j * n) / cols;
+                g[i * rows + j] += t[i * rows + n].real * cos(theta) - t[i * rows + n].imag * sin(theta);
+            }
+        }
+    }
+
+    printf("IDFT finished\n");
 
     return g;
 }
