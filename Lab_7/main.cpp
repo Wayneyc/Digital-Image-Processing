@@ -38,9 +38,14 @@ Complex *GLPF(Complex *imageArr, int width, int height, int d);
 Complex *IHPF(Complex *imageArr, int width, int height, int d);
 Complex *BHPF(Complex *imageArr, int width, int height, int d, int n);
 Complex *GHPF(Complex *imageArr, int width, int height, int d);
+Complex *ModifiedHPF(Complex *imageArr, int width, int height, int d, double c, double H, double L);
+Complex *IBRF(Complex *imageArr, int width, int height, int d, int w); // Ideal Bandreject Selective Filter
+Complex *RectangleFilter(Complex *imageArr, int width, int height, int direction, int w, int interval); // Custom Rectangle Filter
+double *MedianFilter(double *imageArr, int width, int height, int size); // Median Filter
 /*
  Support Method
  */
+double *AddSinusoidalNoise(double *imageArr, int width, int height, double range, double strength);
 double *CenterTranslation(double *image, int width, int height);
 double *Image2Double(Image *image, int width, int height);
 Image *GenerateImage(double *imageArr, int width, int height); 
@@ -52,213 +57,281 @@ Image *CreateNewImage(int type, int width, int height, char *comment);
 Image *ReadPNMImage(char *filename);
 void SavePNMImage(Image *temp_image, char *filename);
 
+Image *ShowHomomorphic(Image *image, int d, double c, double H, double L) {
 
-
-void ShowDFT(Image *image) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_test.pgm";
+    double e = 2.718281828;
 
     int width = image->Width;
     int height = image->Height;
     
     double *imageData = Image2Double(image, width, height);
 
-    Complex *imageArr = DFT(imageData, width, height);
+    // Step 1 --- ln()
+    for (int i = 0; i < (width * height); i++) {
+        imageData[i] = log(imageData[i] + 1) / log(e);
+    }
+    // Step 2 --- Centralization & DFT
+    imageData = CenterTranslation(imageData, width, height);
+    Complex *complexArr = DFT(imageData, width, height);
+    // Step 3 --- Filtering
+    complexArr = ModifiedHPF(complexArr, width, height, d, c, H, L);
+    // Step 4 --- IDFT & Uncentralization
+    imageData = IDFT(complexArr, width, height);
+    imageData = CenterTranslation(imageData, width, height);
+    // Step 5 --- exp()
+    for (int i = 0; i < (width * height); i++) {
+        imageData[i] = exp(imageData[i]) - 1;
+    }
 
-    double *retArr = IDFT(imageArr, width, height);
-
-    Image *outputImage = GenerateImage(retArr, width, height);
-
-    SavePNMImage(outputImage, savePath);
+    Image *outputImage = GenerateImage(imageData, width, height);
+    return outputImage;
 }
 
-/*
- Ideal Low Pass Filter
- */
-void ShowILPF(Image *image, int d) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_ILPF.pgm";
+Image *ShowSinNoise(Image *image, double range, double strength) {
 
     int width = image->Width;
     int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = ILPF(imageArr, width, height, d); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Butterworth Low Pass Filter
- */
-void ShowBLPF(Image *image, int d, int n) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_BLPF.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = BLPF(imageArr, width, height, d, n); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Gaussian Low Pass Filter
- */
-void ShowGLPF(Image *image, int d) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_GLPF.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = GLPF(imageArr, width, height, d); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Ideal High Pass Filter
- */
-void ShowIHPF(Image *image, int d) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_IHPF.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = IHPF(imageArr, width, height, d); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Butterworth High Pass Filter
- */
-void ShowBHPF(Image *image, int d, int n) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_BHPF.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = BHPF(imageArr, width, height, d, n); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Gaussian High Pass Filter
- */
-void ShowGHPF(Image *image, int d) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_GHPF.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = GHPF(imageArr, width, height, d); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    SavePNMImage(outputImage, savePath);
-}
-
-/*
- Thresholding
- */
-void ShowThreshold(Image *image) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_Threshold2.pgm";
-
-    int width = image->Width;
-    int height = image->Height;
-
-    int d = 30;
-    int threshold = 15;
-
-    double *imageData = Image2Double(image, width, height);
-    imageData = CenterTranslation(imageData, width, height);
-    Complex *imageArr = DFT(imageData, width, height);
-    imageArr = GHPF(imageArr, width, height, d); // Pass Filter
-    double *retArr = IDFT(imageArr, width, height);
-    retArr = CenterTranslation(retArr, width, height);
-    Image *outputImage = GenerateImage(retArr, width, height);
-    outputImage = Thresholding(outputImage, threshold);
-    SavePNMImage(outputImage, savePath);
-}
-
-int main(int argc, const char * argv[]) {
     
-    printf("Hello DFT ...\n");
+    double *imageData = Image2Double(image, width, height);
 
-    Image *lenaImage;
-    char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint2.pgm";
+    // Complex *imageArr = DFT(imageData, width, height);
+    // double *retArr = IDFT(imageArr, width, height);
+
+    imageData = AddSinusoidalNoise(imageData, width, height, range, strength);
+
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowSpectrum(Image *image) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = CenterTranslation(imageData, width, height);
+
+    Complex *complexArr = DFT(imageData, width, height);
+
+    imageData = FourierSpectrum(complexArr, width, height);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowBandreject(Image *image, int d, int w) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = CenterTranslation(imageData, width, height);
+
+    Complex *complexArr = DFT(imageData, width, height);
+
+    complexArr = IBRF(complexArr, width, height, d, w);
+
+    imageData = IDFT(complexArr, width, height);
+
+    imageData = CenterTranslation(imageData, width, height);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowRectangleFilter(Image *image, int direction, int w, int interval) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = CenterTranslation(imageData, width, height);
+
+    Complex *complexArr = DFT(imageData, width, height);
+
+    complexArr = RectangleFilter(complexArr, width, height, direction, w, interval);
+
+    imageData = IDFT(complexArr, width, height);
+
+    imageData = CenterTranslation(imageData, width, height);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowMedianFilter(Image *image, int size) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = MedianFilter(imageData, width, height, size);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+int main() {
+
+    printf("Hello Lab7\n");
+
+    Image *image, *imageResult, *lena_noise, *lena_result, *lena_rectangle, *lena_rectangle_specturm;
     char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena.pgm";
-    lenaImage = ReadPNMImage(bridge);
+    char noise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/SinNoise.pgm";
+    char lena_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/LenaWithNoise.pgm";
+    char camera_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/cameraWithNoise.pgm";
 
-    
-    // Testing
-    ShowDFT(lenaImage);
-    // Low Filter
-    ShowILPF(lenaImage, 30);
-    ShowBLPF(lenaImage, 30, 2);
-    ShowGLPF(lenaImage, 30);
-    // High Filter
-    ShowIHPF(lenaImage, 30);
-    ShowBHPF(lenaImage, 30, 2);
-    ShowGHPF(lenaImage, 30);
-    
-    // Thresholding
-    // ShowThreshold(lenaImage);
- 
+    // image = ReadPNMImage(noise);
+
+    /*
+     Question 1 ->
+     */
+    // ShowHomomorphic(image, 30, 1, 0.5, 1.2);
+
+    /*
+     Question 2 ->
+     */
+    // ShowSinNoise(image, 5, 10);
+    // imageResult = ShowBandreject(image, 50, 5);
+    // ShowSpectrum(imageResult);
+
+    /* 
+     Question 3 ->
+     */
+
+    // lena_noise = ReadPNMImage(lena_noise_path);
+
+    // char lena_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Noise_Spectrum.pgm";
+    // lena_result = ShowSpectrum(lena_noise);
+    // SavePNMImage(lena_result, lena_result_path);
+
+    // char lena_rec_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Rec.pgm";
+    // lena_rectangle = ShowRectangleFilter(lena_noise, 1, 5, 20);
+    // SavePNMImage(lena_rectangle, lena_rec_path);
+
+    // char lena_rec_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Rec_Spectrum.pgm";
+    // lena_rectangle_specturm = ShowSpectrum(lena_rectangle);
+    // SavePNMImage(lena_rectangle_specturm, lena_rec_result_path);
+    Image *camera_noise, *camera_result;
+    camera_noise = ReadPNMImage(camera_noise_path);
+
+    char camera_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Camera_result.pgm";
+    camera_result = ShowMedianFilter(camera_noise, 1);
+    SavePNMImage(camera_result, camera_result_path);
+
     return 0;
 }
 
-Image *Thresholding(Image *image, int threshold) {
+double *MedianFilter(double *imageArr, int width, int height, int size) {
 
-    int width = image->Width;
-    int height = image->Height;
-    unsigned char *imageData = image->data;
+    int asize = size * 2 + 1;
 
-    for (int k = 0; k < (width * height); k++) {
-        if (imageData[k] > threshold) {
-            imageData[k] = 0;
-        } else {
-            imageData[k] = 255;
+    for (int i = size; i < (width - size); i++) {
+        for (int j = size; j < (height - size); j++) {
+            int *med = (int *)malloc(sizeof(int) * asize * asize);
+            for (int u = 0; u < asize; u++) {
+                for (int v = 0; v < asize; v++) {
+                    med[u * asize + v] = int(round(imageArr[(i-size+u) * width + (j-size+v)]));
+                }
+            }
+            sort(med, med + asize * asize);
+            imageArr[i * width + j] = med[asize * asize / 2];
         }
     }
 
-    return image;
+    return imageArr;
+}
+
+Complex *RectangleFilter(Complex *imageArr, int width, int height, int direction, int w, int interval) {
+
+    double center_x = width / double(2);
+    double center_y = height / double(2);
+
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
+            int H = 1;
+            if (direction == 0) { // Horizontal
+                if (((center_x - w / 2) <= i) && (i <= (center_x + w / 2)) && ( ((center_y - interval / 2) > j) || ((center_y + interval / 2) < j) )) {
+                    H = 0;
+                }
+            } else { // Vertical
+                if (((center_x - w / 2) <= j) && (j <= (center_x + w / 2)) && ( ((center_y - interval / 2) > i) || ((center_y + interval / 2) < i) )) {
+                    H = 0;
+                }
+            }
+            
+            imageArr[i * width + j].real *= H;
+            imageArr[i * width + j].imag *= H;
+        }
+    }
+
+    return imageArr;
+}
+
+Complex *IBRF(Complex *imageArr, int width, int height, int d, int w) {
+
+    double center_x = width / double(2);
+    double center_y = height / double(2);
+
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
+            int H = 1;
+            if (((d - w / 2) <= D) && ((d + w / 2) >= D)) {
+                H = 0;
+            }
+            imageArr[i * width + j].real *= H;
+            imageArr[i * width + j].imag *= H;
+        }
+    }
+
+    return imageArr;
+}
+
+double *AddSinusoidalNoise(double *imageArr, int width, int height, double range, double strength) {
+
+    double normalization = 2 * PI / range;
+
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            double sinNoise_x = sin(i * normalization) * strength;
+            double sinNoise_y = sin(j * normalization) * strength;
+            imageArr[i * width + j] += sinNoise_x + sinNoise_y;
+        }
+    }
+
+    return imageArr;
+}
+
+
+
+Complex *ModifiedHPF(Complex *imageArr, int width, int height, int d, double c, double H, double L) {
+
+    double e = 2.718281828;
+
+    double center_x = width / double(2);
+    double center_y = height / double(2);
+
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
+            double H = (H - L) * (1 - pow(e, (-c * (pow(D, 2) / pow(d, 2))))) + L;
+            imageArr[i * width + j].real *= H;
+            imageArr[i * width + j].imag *= H;
+        }
+    }
+
+    return imageArr;
 }
 
 Complex *GHPF(Complex *imageArr, int width, int height, int d) {
@@ -488,6 +561,23 @@ double *Image2Double(Image *image, int width, int height) {
         retArr[i] = double(imageData[i]);
     }
     return retArr;
+}
+
+Image *Thresholding(Image *image, int threshold) {
+
+    int width = image->Width;
+    int height = image->Height;
+    unsigned char *imageData = image->data;
+
+    for (int k = 0; k < (width * height); k++) {
+        if (imageData[k] > threshold) {
+            imageData[k] = 0;
+        } else {
+            imageData[k] = 255;
+        }
+    }
+
+    return image;
 }
     
 Image *GenerateImage(double *imageArr, int width, int height) {

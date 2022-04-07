@@ -17,7 +17,9 @@
         "cpp": "g++ $fileName -o build/$fileNameWithoutExt && ./build/$fileNameWithoutExt",
     },
     "files.associations": {
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp"
     }
 }
 
