@@ -94,9 +94,6 @@ Image *ShowSinNoise(Image *image, double range, double strength) {
     
     double *imageData = Image2Double(image, width, height);
 
-    // Complex *imageArr = DFT(imageData, width, height);
-    // double *retArr = IDFT(imageArr, width, height);
-
     imageData = AddSinusoidalNoise(imageData, width, height, range, strength);
 
     Image *outputImage = GenerateImage(imageData, width, height);
@@ -186,23 +183,30 @@ int main() {
 
     Image *image, *imageResult, *lena_noise, *lena_result, *lena_rectangle, *lena_rectangle_specturm;
     char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
+    char goldhill[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/goldhill.pgm";
     char noise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/SinNoise.pgm";
     char lena_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/LenaWithNoise.pgm";
     char camera_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/cameraWithNoise.pgm";
+    char SinNoise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/SinNoise.pgm";
+    char SinNoise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/Spectrum.pgm";
 
-    // image = ReadPNMImage(noise);
+    image = ReadPNMImage(SinNoise);
 
     /*
      Question 1 ->
      */
-    // ShowHomomorphic(image, 30, 1, 0.5, 1.2);
+    // char homomorphic_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/homomorphic.pgm";
+    // imageResult = ShowHomomorphic(image, 10, 1, 1.2, 0.8);
+    // SavePNMImage(imageResult, homomorphic_path);
 
     /*
      Question 2 ->
      */
     // ShowSinNoise(image, 5, 10);
     // imageResult = ShowBandreject(image, 50, 5);
-    // ShowSpectrum(imageResult);
+    imageResult = ShowSpectrum(image);
+    SavePNMImage(imageResult, SinNoise_path);
+
 
     /* 
      Question 3 ->
@@ -221,12 +225,13 @@ int main() {
     // char lena_rec_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Rec_Spectrum.pgm";
     // lena_rectangle_specturm = ShowSpectrum(lena_rectangle);
     // SavePNMImage(lena_rectangle_specturm, lena_rec_result_path);
-    Image *camera_noise, *camera_result;
-    camera_noise = ReadPNMImage(camera_noise_path);
 
-    char camera_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Camera_result.pgm";
-    camera_result = ShowMedianFilter(camera_noise, 1);
-    SavePNMImage(camera_result, camera_result_path);
+    // Image *camera_noise, *camera_result;
+    // camera_noise = ReadPNMImage(camera_noise_path);
+
+    // char camera_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Camera_result.pgm";
+    // camera_result = ShowMedianFilter(camera_noise, 1);
+    // SavePNMImage(camera_result, camera_result_path);
 
     return 0;
 }
@@ -261,11 +266,13 @@ Complex *RectangleFilter(Complex *imageArr, int width, int height, int direction
             double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
             int H = 1;
             if (direction == 0) { // Horizontal
-                if (((center_x - w / 2) <= i) && (i <= (center_x + w / 2)) && ( ((center_y - interval / 2) > j) || ((center_y + interval / 2) < j) )) {
+                if (((center_x - w / 2) <= i) && (i <= (center_x + w / 2)) && ( ((center_y - interval / 2) > j) \
+                 || ((center_y + interval / 2) < j) )) {
                     H = 0;
                 }
             } else { // Vertical
-                if (((center_x - w / 2) <= j) && (j <= (center_x + w / 2)) && ( ((center_y - interval / 2) > i) || ((center_y + interval / 2) < i) )) {
+                if (((center_x - w / 2) <= j) && (j <= (center_x + w / 2)) && ( ((center_y - interval / 2) > i) \
+                 || ((center_y + interval / 2) < i) )) {
                     H = 0;
                 }
             }
@@ -325,9 +332,9 @@ Complex *ModifiedHPF(Complex *imageArr, int width, int height, int d, double c, 
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
             double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
-            double H = (H - L) * (1 - pow(e, (-c * (pow(D, 2) / pow(d, 2))))) + L;
-            imageArr[i * width + j].real *= H;
-            imageArr[i * width + j].imag *= H;
+            double K = (H - L) * (1 - (pow(e, (-c * pow(D, 2) / pow(d, 2))))) + L;
+            imageArr[i * width + j].real *= K;
+            imageArr[i * width + j].imag *= K;
         }
     }
 

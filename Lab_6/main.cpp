@@ -221,25 +221,25 @@ int main(int argc, const char * argv[]) {
     printf("Hello DFT ...\n");
 
     Image *lenaImage;
-    char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint2.pgm";
+    char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint1.pgm";
     char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena.pgm";
-    lenaImage = ReadPNMImage(bridge);
+    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lena.pgm";
+    lenaImage = ReadPNMImage(lena);
 
     
     // Testing
     ShowDFT(lenaImage);
     // Low Filter
-    ShowILPF(lenaImage, 30);
-    ShowBLPF(lenaImage, 30, 2);
-    ShowGLPF(lenaImage, 30);
+    ShowILPF(lenaImage, 160);
+    ShowBLPF(lenaImage, 160, 2);
+    ShowGLPF(lenaImage, 160);
     // High Filter
     ShowIHPF(lenaImage, 30);
     ShowBHPF(lenaImage, 30, 2);
     ShowGHPF(lenaImage, 30);
     
     // Thresholding
-    // ShowThreshold(lenaImage);
+    ShowThreshold(lenaImage);
  
     return 0;
 }
