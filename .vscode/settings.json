@@ -19,7 +19,8 @@
     "files.associations": {
         "algorithm": "cpp",
         "cmath": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "random": "cpp"
     }
 }
 

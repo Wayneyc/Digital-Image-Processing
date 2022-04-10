@@ -42,6 +42,10 @@ Complex *ModifiedHPF(Complex *imageArr, int width, int height, int d, double c, 
 Complex *IBRF(Complex *imageArr, int width, int height, int d, int w); // Ideal Bandreject Selective Filter
 Complex *RectangleFilter(Complex *imageArr, int width, int height, int direction, int w, int interval); // Custom Rectangle Filter
 double *MedianFilter(double *imageArr, int width, int height, int size); // Median Filter
+double *ArithmeticMeanFilter(double *imageArr, int width, int height, int size); // Arithmetic Mean Filter
+double *GeometricMeanFilter(double *imageArr, int width, int height, int size); // Geometric Mean Filter
+double *AlphaTrimmedMeanFilter(double *imageArr, int width, int height, int size, int d); // Alpha Trimmed Mean Filter
+double *AdaptiveMedianFilter(double *imageArr, int width, int height, int max_size); // Adaptive Median Filter
 /*
  Support Method
  */
@@ -177,6 +181,62 @@ Image *ShowMedianFilter(Image *image, int size) {
     return outputImage;
 }
 
+Image *ShowArithmeticMeanFilter(Image *image, int size) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = ArithmeticMeanFilter(imageData, width, height, size);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowGeometricMeanFilter(Image *image, int size) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = GeometricMeanFilter(imageData, width, height, size);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowAlphaTrimmedMeanFilter(Image *image, int size, int d) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = AlphaTrimmedMeanFilter(imageData, width, height, size, d);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
+Image *ShowAdaptiveMedianFilter(Image *image, int max_size) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    double *imageData = Image2Double(image, width, height);
+
+    imageData = AdaptiveMedianFilter(imageData, width, height, max_size);
+    
+    Image *outputImage = GenerateImage(imageData, width, height);
+
+    return outputImage;
+}
+
 int main() {
 
     printf("Hello Lab7\n");
@@ -190,7 +250,7 @@ int main() {
     char SinNoise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/SinNoise.pgm";
     char SinNoise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/Spectrum.pgm";
 
-    image = ReadPNMImage(SinNoise);
+    // image = ReadPNMImage(SinNoise);
 
     /*
      Question 1 ->
@@ -204,19 +264,17 @@ int main() {
      */
     // ShowSinNoise(image, 5, 10);
     // imageResult = ShowBandreject(image, 50, 5);
-    imageResult = ShowSpectrum(image);
-    SavePNMImage(imageResult, SinNoise_path);
-
+    // imageResult = ShowSpectrum(image);
+    // SavePNMImage(imageResult, SinNoise_path);
 
     /* 
      Question 3 ->
      */
-
     // lena_noise = ReadPNMImage(lena_noise_path);
 
-    // char lena_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Noise_Spectrum.pgm";
+    // char lena_spectrum_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Noise_Spectrum.pgm";
     // lena_result = ShowSpectrum(lena_noise);
-    // SavePNMImage(lena_result, lena_result_path);
+    // SavePNMImage(lena_result, lena_spectrum_path);
 
     // char lena_rec_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Lena_Rec.pgm";
     // lena_rectangle = ShowRectangleFilter(lena_noise, 1, 5, 20);
@@ -227,18 +285,183 @@ int main() {
     // SavePNMImage(lena_rectangle_specturm, lena_rec_result_path);
 
     // Image *camera_noise, *camera_result;
+
     // camera_noise = ReadPNMImage(camera_noise_path);
 
     // char camera_result_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Camera_result.pgm";
     // camera_result = ShowMedianFilter(camera_noise, 1);
     // SavePNMImage(camera_result, camera_result_path);
 
+    /*
+     Question 4 ->
+     */
+    Image *arithmeticImage, *geometricImage, *medianImage, *AlphaTrimmedImage, *adaptiveMedianImage;
+    char D1[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD1.pgm";
+    char D2[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD2.pgm";
+    char D3[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD3.pgm";
+    
+    image = ReadPNMImage(D2);
+
+    arithmeticImage = ShowArithmeticMeanFilter(image, 1);
+    geometricImage = ShowGeometricMeanFilter(image, 1);
+    medianImage = ShowMedianFilter(image, 1);
+    AlphaTrimmedImage = ShowAlphaTrimmedMeanFilter(image, 1, 2);
+    adaptiveMedianImage = ShowAdaptiveMedianFilter(image, 5);
+
+    char arithmetic_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/arithmetic_mean.pgm";
+    char geometric_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/geometric_mean.pgm";
+    char median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/median.pgm";
+    char Alpha_trimmed_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Alpha-trimmed_mean.pgm";
+    char adaptive_median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/adaptive_median.pgm";
+
+    SavePNMImage(arithmeticImage, arithmetic_path);
+    SavePNMImage(geometricImage, geometric_path);
+    SavePNMImage(medianImage, median_path);
+    SavePNMImage(AlphaTrimmedImage, Alpha_trimmed_path);
+    SavePNMImage(adaptiveMedianImage, adaptive_median_path);
+
     return 0;
+}
+
+double AdaptiveMedianOperator(double *imageArr, int width, int height, int x, int y, int size, int max_size) {
+
+    int asize = size * 2 + 1;
+
+    double *medArr = (double *)malloc(sizeof(double) * asize * asize);
+    for (int u = 0; u < asize; u++) {
+        for (int v = 0; v < asize; v++) {
+            medArr[u * asize + v] = imageArr[(x-size+u) * width + (y-size+v)];
+        }
+    }
+    sort(medArr, medArr + (asize * asize));
+
+    double z_med = medArr[asize * asize / 2];
+    double z_min = medArr[0];
+    double z_max = medArr[asize * asize - 1];
+
+    // Stage A
+    double A1 = z_med - z_min;
+    double A2 = z_med - z_max;
+
+    if ((A1 > 0) && (A2 < 0)) {
+        // Stage B
+        double B1 = imageArr[x * width + y] - z_med;
+        double B2 = imageArr[x * width + y] - z_max;
+        if ((B1 > 0) && (B2 < 0)) {
+            return imageArr[x * width + y];
+        } else {
+            return z_med;
+        }
+    } else {
+        int new_size = size + 1;
+        if (new_size <= max_size) {
+            // Repeat Stage A
+            return AdaptiveMedianOperator(imageArr, width, height, x, y, new_size, max_size);
+        } else {
+            return z_med;
+        }
+    }
+}
+double *AdaptiveMedianFilter(double *imageArr, int width, int height, int max_size) {
+
+    int amax = max_size * 2 + 1;
+
+    // Temporary Arr
+    double *tempArr = (double *)malloc(sizeof(double) * width * height);
+
+    for (int i = amax; i < (width - amax); i++) {
+        for (int j = amax; j < (height - amax); j++) {
+            tempArr[i * width + j] = AdaptiveMedianOperator(imageArr, width, height, i, j, 1, max_size);
+        }
+    }
+
+    return tempArr;
+}
+
+double *AlphaTrimmedMeanFilter(double *imageArr, int width, int height, int size, int d) {
+
+    int asize = size * 2 + 1;
+
+    if (d >= (asize * asize)) {
+        printf("AlphaTrimmedMeanFilter ~ d ERROR!\n");
+        exit(0);
+    }
+
+    // Temporary Arr
+    double *tempArr = (double *)malloc(sizeof(double) * width * height);
+
+    for (int i = size; i < (width - size); i++) {
+        for (int j = size; j < (height - size); j++) {
+            int *med = (int *)malloc(sizeof(int) * asize * asize);
+            for (int u = 0; u < asize; u++) {
+                for (int v = 0; v < asize; v++) {
+                    med[u * asize + v] = int(round(imageArr[(i-size+u) * width + (j-size+v)]));
+                }
+            }
+            sort(med, med + (asize * asize));
+            int start = int(ceil(double(d/2)));
+            int end = asize * asize - int(floor(double(d/2)));
+            int sum = 0;
+            for (int k = start; k < end; k++) {
+                sum += med[k];
+            }
+            tempArr[i * width + j] = sum / (asize * asize - d);
+        }
+    }
+
+    return tempArr;
+}
+
+double *GeometricMeanFilter(double *imageArr, int width, int height, int size) {
+
+    int asize = size * 2 + 1;
+
+    // Temporary Arr
+    double *tempArr = (double *)malloc(sizeof(double) * width * height);
+
+    for (int i = size; i < (width - size); i++) {
+        for (int j = size; j < (height - size); j++) {
+            double product = 1;
+            for (int u = 0; u < asize; u++) {
+                for (int v = 0; v < asize; v++) {
+                    product = product * imageArr[(i-size+u) * width + (j-size+v)];
+                }
+            }
+            tempArr[i * width + j] = pow(product, 1.0 / (asize * asize));
+        }
+    }
+
+    return tempArr;
+}
+
+double *ArithmeticMeanFilter(double *imageArr, int width, int height, int size) {
+
+    int asize = size * 2 + 1;
+
+    // Temporary Arr
+    double *tempArr = (double *)malloc(sizeof(double) * width * height);
+
+    for (int i = size; i < (width - size); i++) {
+        for (int j = size; j < (height - size); j++) {
+            int mean = 0;
+            for (int u = 0; u < asize; u++) {
+                for (int v = 0; v < asize; v++) {
+                    mean += int(round(imageArr[(i-size+u) * width + (j-size+v)]));
+                }
+            }
+            tempArr[i * width + j] = mean / (asize * asize);
+        }
+    }
+
+    return tempArr;
 }
 
 double *MedianFilter(double *imageArr, int width, int height, int size) {
 
     int asize = size * 2 + 1;
+
+    // Temporary Arr
+    double *tempArr = (double *)malloc(sizeof(double) * width * height);
 
     for (int i = size; i < (width - size); i++) {
         for (int j = size; j < (height - size); j++) {
@@ -249,11 +472,11 @@ double *MedianFilter(double *imageArr, int width, int height, int size) {
                 }
             }
             sort(med, med + asize * asize);
-            imageArr[i * width + j] = med[asize * asize / 2];
+            tempArr[i * width + j] = med[asize * asize / 2];
         }
     }
 
-    return imageArr;
+    return tempArr;
 }
 
 Complex *RectangleFilter(Complex *imageArr, int width, int height, int direction, int w, int interval) {
