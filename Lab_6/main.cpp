@@ -6,9 +6,9 @@
 //
 
 // for mac
-#include <sys/malloc.h>
+// #include <sys/malloc.h>
 // for windows
-// #include <malloc.h>
+#include <malloc.h>
 
 #include <complex.h>
 
@@ -54,22 +54,22 @@ void SavePNMImage(Image *temp_image, char *filename);
 
 
 
-void ShowDFT(Image *image) {
-
-    char savePath[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_6/lena_test.pgm";
+Image *ShowDFT(Image *image) {
 
     int width = image->Width;
     int height = image->Height;
     
     double *imageData = Image2Double(image, width, height);
 
+    imageData = CenterTranslation(imageData, width, height);
+
     Complex *imageArr = DFT(imageData, width, height);
 
-    double *retArr = IDFT(imageArr, width, height);
+    double *retArr = FourierSpectrum(imageArr, width, height);
 
     Image *outputImage = GenerateImage(retArr, width, height);
 
-    SavePNMImage(outputImage, savePath);
+    return outputImage;
 }
 
 /*
@@ -220,26 +220,30 @@ int main(int argc, const char * argv[]) {
     
     printf("Hello DFT ...\n");
 
-    Image *lenaImage;
-    char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint1.pgm";
-    char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lena.pgm";
+    Image *lenaImage, *outputImage;
+    // char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint1.pgm";
+    // char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
+    char lena[] = ".\\lena.pgm";
     lenaImage = ReadPNMImage(lena);
 
+    outputImage = ShowDFT(lenaImage);
+
+    char savePath[] = ".\\lena_test.pgm";
+
+    SavePNMImage(outputImage, savePath);
+    // // Testing
+    // ShowDFT(lenaImage);
+    // // Low Filter
+    // ShowILPF(lenaImage, 160);
+    // ShowBLPF(lenaImage, 160, 2);
+    // ShowGLPF(lenaImage, 160);
+    // // High Filter
+    // ShowIHPF(lenaImage, 30);
+    // ShowBHPF(lenaImage, 30, 2);
+    // ShowGHPF(lenaImage, 30);
     
-    // Testing
-    ShowDFT(lenaImage);
-    // Low Filter
-    ShowILPF(lenaImage, 160);
-    ShowBLPF(lenaImage, 160, 2);
-    ShowGLPF(lenaImage, 160);
-    // High Filter
-    ShowIHPF(lenaImage, 30);
-    ShowBHPF(lenaImage, 30, 2);
-    ShowGHPF(lenaImage, 30);
-    
-    // Thresholding
-    ShowThreshold(lenaImage);
+    // // Thresholding
+    // ShowThreshold(lenaImage);
  
     return 0;
 }

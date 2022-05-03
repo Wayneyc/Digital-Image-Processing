@@ -6,9 +6,9 @@
 //
 
 // for mac
-#include <sys/malloc.h>
+// #include <sys/malloc.h>
 // for windows
-// #include <malloc.h>
+#include <malloc.h>
 
 #include <complex.h>
 
@@ -74,14 +74,15 @@ int main(int argc, const char * argv[]) {
     
     Image *image1, *imageLena;
     
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_5/Lab_5/lena.pgm";
+    char lena[] = ".\\lena.pgm";
     imageLena = ReadPNMImage(lena);
 
     // image1 = DFTResult(imageLena, 0);
     // image1 = DFTPhaseAngle(imageLena);
     image1 = DFTMagnitude(imageLena, 100);
+    // image1 = Test(imageLena);
     
-    char savePath1[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_5/Lab_5/Tesing.pgm";
+    char savePath1[] = ".\\Test.pgm";
     
     SavePNMImage(image1, savePath1);
  
@@ -99,7 +100,7 @@ Image *DFTResult(Image *image, int type) {
     int width = image->Width;
     int height = image->Height;
 
-    int resultArr[width*height];
+    int *resultArr = (int *)malloc(sizeof(int) * width * height);
 
     int enhance = 1;
 
@@ -236,7 +237,7 @@ Complex *DFT(Image *image) {
     complexArr = (Complex *)malloc(sizeof(Complex) * width * height);
     
     // Centralization
-    int tempImage[width*height];
+    int *tempImage = (int *)malloc(sizeof(int) * width * height);
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
             tempImage[i * width + j] = imageData[i * width + j];

@@ -20,7 +20,8 @@
         "algorithm": "cpp",
         "cmath": "cpp",
         "complex": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "xutility": "cpp"
     }
 }
 

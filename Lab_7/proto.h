@@ -21,7 +21,7 @@ typedef struct Image
 /*
  Define the structure "Complex"
  */
-typedef struct Complex {
+typedef struct {
     double real;
     double imag;
 } Complex;

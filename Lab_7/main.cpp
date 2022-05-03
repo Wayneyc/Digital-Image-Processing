@@ -6,11 +6,9 @@
 //
 
 // for mac
-#include <sys/malloc.h>
+// #include <sys/malloc.h>
 // for windows
-// #include <malloc.h>
-
-#include <complex.h>
+#include <malloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -242,15 +240,21 @@ int main() {
     printf("Hello Lab7\n");
 
     Image *image, *imageResult, *lena_noise, *lena_result, *lena_rectangle, *lena_rectangle_specturm;
-    char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
-    char goldhill[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/goldhill.pgm";
-    char noise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/SinNoise.pgm";
-    char lena_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/LenaWithNoise.pgm";
-    char camera_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/cameraWithNoise.pgm";
-    char SinNoise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/SinNoise.pgm";
-    char SinNoise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/Spectrum.pgm";
+    // char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
+    // char goldhill[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/goldhill.pgm";
+    // char noise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/SinNoise.pgm";
+    // char lena_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/LenaWithNoise.pgm";
+    // char camera_noise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/cameraWithNoise.pgm";
+    // char SinNoise[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/SinNoise.pgm";
+    // char SinNoise_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Q2/Spectrum.pgm";
+    char lena[] = ".\\lena.pgm";
 
-    // image = ReadPNMImage(SinNoise);
+    image = ReadPNMImage(lena);
+
+    imageResult = ShowSpectrum(image);
+
+    char imagePath[] = ".\\spectrum.pgm";
+    SavePNMImage(imageResult, imagePath);
 
     /*
      Question 1 ->
@@ -295,30 +299,30 @@ int main() {
     /*
      Question 4 ->
      */
-    Image *arithmeticImage, *geometricImage, *medianImage, *AlphaTrimmedImage, *adaptiveMedianImage;
-    char D1[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD1.pgm";
-    char D2[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD2.pgm";
-    char D3[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD3.pgm";
+    // Image *arithmeticImage, *geometricImage, *medianImage, *AlphaTrimmedImage, *adaptiveMedianImage;
+    // char D1[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD1.pgm";
+    // char D2[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD2.pgm";
+    // char D3[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/lenaD3.pgm";
     
-    image = ReadPNMImage(D2);
+    // image = ReadPNMImage(D2);
 
-    arithmeticImage = ShowArithmeticMeanFilter(image, 1);
-    geometricImage = ShowGeometricMeanFilter(image, 1);
-    medianImage = ShowMedianFilter(image, 1);
-    AlphaTrimmedImage = ShowAlphaTrimmedMeanFilter(image, 1, 2);
-    adaptiveMedianImage = ShowAdaptiveMedianFilter(image, 5);
+    // arithmeticImage = ShowArithmeticMeanFilter(image, 1);
+    // geometricImage = ShowGeometricMeanFilter(image, 1);
+    // medianImage = ShowMedianFilter(image, 1);
+    // AlphaTrimmedImage = ShowAlphaTrimmedMeanFilter(image, 1, 2);
+    // adaptiveMedianImage = ShowAdaptiveMedianFilter(image, 5);
 
-    char arithmetic_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/arithmetic_mean.pgm";
-    char geometric_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/geometric_mean.pgm";
-    char median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/median.pgm";
-    char Alpha_trimmed_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Alpha-trimmed_mean.pgm";
-    char adaptive_median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/adaptive_median.pgm";
+    // char arithmetic_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/arithmetic_mean.pgm";
+    // char geometric_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/geometric_mean.pgm";
+    // char median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/median.pgm";
+    // char Alpha_trimmed_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/Alpha-trimmed_mean.pgm";
+    // char adaptive_median_path[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/Lab_7/adaptive_median.pgm";
 
-    SavePNMImage(arithmeticImage, arithmetic_path);
-    SavePNMImage(geometricImage, geometric_path);
-    SavePNMImage(medianImage, median_path);
-    SavePNMImage(AlphaTrimmedImage, Alpha_trimmed_path);
-    SavePNMImage(adaptiveMedianImage, adaptive_median_path);
+    // SavePNMImage(arithmeticImage, arithmetic_path);
+    // SavePNMImage(geometricImage, geometric_path);
+    // SavePNMImage(medianImage, median_path);
+    // SavePNMImage(AlphaTrimmedImage, Alpha_trimmed_path);
+    // SavePNMImage(adaptiveMedianImage, adaptive_median_path);
 
     return 0;
 }
