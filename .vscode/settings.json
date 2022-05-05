@@ -21,7 +21,9 @@
         "cmath": "cpp",
         "complex": "cpp",
         "random": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "proto.h": "c",
+        "cstdlib": "cpp"
     }
 }
 

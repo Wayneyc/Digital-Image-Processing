@@ -220,17 +220,16 @@ int main(int argc, const char * argv[]) {
     
     printf("Hello DFT ...\n");
 
-    Image *lenaImage, *outputImage;
-    // char finger[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/fingerprint1.pgm";
-    // char bridge[] = "/Users/wenyuanchun/Desktop/DIP/Digital-Image-Processing/images/bridge.pgm";
+    Image *lenaImage;
+
     char lena[] = ".\\lena.pgm";
+
     lenaImage = ReadPNMImage(lena);
 
-    outputImage = ShowDFT(lenaImage);
+    char savePath[] = ".\\lena_testsss.pgm";
 
-    char savePath[] = ".\\lena_test.pgm";
-
-    SavePNMImage(outputImage, savePath);
+    SavePNMImage(lenaImage, savePath);
+    
     // // Testing
     // ShowDFT(lenaImage);
     // // Low Filter

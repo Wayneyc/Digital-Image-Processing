@@ -8,9 +8,9 @@
 #include <stdio.h>
 
 // for mac
-#include <sys/malloc.h>
+// #include <sys/malloc.h>
 // for windows
-//#include <malloc.h>
+#include <malloc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,28 +34,28 @@ int main(int argc, const char * argv[]) {
 
     Image *imageLena, *imageNoise, *newImage1, *newImage2, *newImage3, *newImage4, *newImage5, *newImage6;
     // Raw image
-    char lena[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/DIP_Space/Resource/images/lena.pgm";
-    char noise[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/DIP_Space/Resource/images/noise.pgm";
+    char lena[] = ".\\lena.pgm";
+    // char noise[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/DIP_Space/Resource/images/noise.pgm";
     imageLena = ReadPNMImage(lena);
-    imageNoise = ReadPNMImage(noise);
+    // imageNoise = ReadPNMImage(noise);
     
-    char PR1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR1.pgm";
-    char PR2[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR2.pgm";
-    char PR3[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR3.pgm";
-    char PR4[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR4.pgm";
-    char PR5[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR5.pgm";
-    char PR6[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR6.pgm";
+    // char PR1[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR1.pgm";
+    char PR2[] = ".\\PR2.pgm";
+    // char PR3[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR3.pgm";
+    // char PR4[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR4.pgm";
+    // char PR5[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR5.pgm";
+    // char PR6[] = "/Users/wenyuanchun/Desktop/DIP/DIP_Space/Scaling/Scaling/PR6.pgm";
     
     // Pixel Replication (If need other method, please change function name)
-    newImage1 = BilinearInterpolation(imageLena, 1.3); // Input resize rate HERE
-    newImage2 = BilinearInterpolation(imageLena, 0.25);
-    newImage3 = BilinearInterpolation(imageNoise, 1.3); // Input resize rate HERE
-    newImage4 = BilinearInterpolation(imageNoise, 0.7);
-    newImage5 = NegativeImageOperation(imageLena); // Input resize rate HERE
-    newImage6 = NegativeImageOperation(imageNoise);
+    // newImage1 = BilinearInterpolation(imageLena, 1.3); // Input resize rate HERE
+    // newImage2 = BilinearInterpolation(imageLena, 0.25);
+    // newImage3 = BilinearInterpolation(imageNoise, 1.3); // Input resize rate HERE
+    // newImage4 = BilinearInterpolation(imageNoise, 0.7);
+    // newImage5 = NegativeImageOperation(imageLena); // Input resize rate HERE
+    // newImage6 = NegativeImageOperation(imageNoise);
     
 //    SavePNMImage(newImage1, PR1);
-    SavePNMImage(newImage2, PR2);
+    SavePNMImage(imageLena, PR2);
 //    SavePNMImage(newImage3, PR3);
 //    SavePNMImage(newImage4, PR4);
 //    SavePNMImage(newImage5, PR5);
@@ -112,7 +112,7 @@ Image *BilinearInterpolation(Image *image, double rate) {
     // Extract data of old image
     int prev_width = image->Width;
     int prev_height = image->Height;
-    int rawMatrix[prev_height][prev_width];
+    int rawMatrix[1][1];
     for (int i = 0; i < prev_height; i++) {
         for (int j = 0; j < prev_width; j++) {
             rawMatrix[i][j] = *tempin;
@@ -165,7 +165,7 @@ Image *NearestNeighborInterpolation(Image *image, double rate) {
     // Extract data of old image
     int prev_width = image->Width;
     int prev_height = image->Height;
-    int rawMatrix[prev_height][prev_width];
+    int rawMatrix[1][1];
     for (int i = 0; i < prev_height; i++) {
         for (int j = 0; j < prev_width; j++) {
             rawMatrix[i][j] = *tempin;
@@ -225,7 +225,7 @@ Image *PixelReplication(Image *image, double rate) {
     tempout = newImage->data;
     
     // Use matrix to store
-    int rawMatrix[prev_height][prev_width];
+    int rawMatrix[1][1];
     for (int i = 0; i < prev_height; i++) {
         for (int j = 0; j < prev_width; j++) {
             rawMatrix[i][j] = *tempin;
