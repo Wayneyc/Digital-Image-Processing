@@ -23,7 +23,9 @@
         "random": "cpp",
         "xutility": "cpp",
         "proto.h": "c",
-        "cstdlib": "cpp"
-    }
+        "cstdlib": "cpp",
+        "xiosbase": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }
 

@@ -43,49 +43,293 @@ double *CenterTranslation(double *imageArr, int width, int height);
 Image *GenerateImage(Image *image, double *imageArr, int width, int height);
 Complex *DFT(double *imageArr, int width, int height);
 double *IDFT(Complex *imageArr, int width, int height);
+double *FourierSpectrum(Complex *imageArr, int width, int height);
 double *GradientMagnitude(Image *image);
 double *AngleImage(Image *image);
+Image *NonmaximaSuppression(Image *image);
+int *ZeroCrossing(int *inData, int width, int height);
 
 /*
  Main Method
  */
 Image *GetGradientImage(Image *image, int type);
 Image *CannyAlgorithm(Image *image);
+Image *LoGAlgorithm(Image *image);
+Image *GlobalThresholding(Image *image, double T0);
 
 
 int main() {
 
     printf("Hello Lab 9\n");
+
+    Image *inImage, *outImage;
     
     char inPath_1[] = ".\\headCT-Vandy.pgm";
     char inPath_2[] = ".\\building_original.pgm";
     char inPath_3[] = ".\\noisy_fingerprint.pgm";
     char inPath_4[] = ".\\polymersomes.pgm";
 
-    /* Question 1 */
-    Image *inImage, *outImage;
+    /* Question 1 - Roberts(0) Prewitt(1) Sobel(2) */
+    
+    // headCT-Vandy.pgm
     inImage = ReadPNMImage(inPath_1);
     outImage = GetGradientImage(inImage, 0);
-    char outPath1[] = ".\\q1\\Gradient-0.pgm";
-    SavePNMImage(outImage, outPath1);
+    char outPath10[] = ".\\q1\\headCT-Roberts.pgm";
+    SavePNMImage(outImage, outPath10);
+    inImage = ReadPNMImage(inPath_1);
+    outImage = GetGradientImage(inImage, 1);
+    char outPath11[] = ".\\q1\\headCT-Prewitt.pgm";
+    SavePNMImage(outImage, outPath11);
+    inImage = ReadPNMImage(inPath_1);
+    outImage = GetGradientImage(inImage, 2);
+    char outPath12[] = ".\\q1\\headCT-Sobel.pgm";
+    SavePNMImage(outImage, outPath12);
+
+    // building_original
+    inImage = ReadPNMImage(inPath_2);
+    outImage = GetGradientImage(inImage, 0);
+    char outPath13[] = ".\\q1\\building-Roberts.pgm";
+    SavePNMImage(outImage, outPath13);
+    inImage = ReadPNMImage(inPath_2);
+    outImage = GetGradientImage(inImage, 1);
+    char outPath14[] = ".\\q1\\building-Prewitt.pgm";
+    SavePNMImage(outImage, outPath14);
+    inImage = ReadPNMImage(inPath_2);
+    outImage = GetGradientImage(inImage, 2);
+    char outPath15[] = ".\\q1\\building-Sobel.pgm";
+    SavePNMImage(outImage, outPath15);
+
+    // noisy_fingerprint.pgm
+    inImage = ReadPNMImage(inPath_3);
+    outImage = GetGradientImage(inImage, 0);
+    char outPath16[] = ".\\q1\\fingerprint-Roberts.pgm";
+    SavePNMImage(outImage, outPath16);
+    inImage = ReadPNMImage(inPath_3);
+    outImage = GetGradientImage(inImage, 1);
+    char outPath17[] = ".\\q1\\fingerprint-Prewitt.pgm";
+    SavePNMImage(outImage, outPath17);
+    inImage = ReadPNMImage(inPath_3);
+    outImage = GetGradientImage(inImage, 2);
+    char outPath18[] = ".\\q1\\fingerprint-Sobel.pgm";
+    SavePNMImage(outImage, outPath18);
+    
 
     /* Question 2 */
+
+    // headCT-Vandy.pgm
     inImage = ReadPNMImage(inPath_1);
     outImage = CannyAlgorithm(inImage);
-    char outPath2[] = ".\\q2\\Canny.pgm";
-    SavePNMImage(outImage, outPath2);
+    char outPath20[] = ".\\q2\\headCT-Canny.pgm";
+    SavePNMImage(outImage, outPath20);
+    inImage = ReadPNMImage(inPath_1);
+    outImage = LoGAlgorithm(inImage);
+    char outPath31[] = ".\\q2\\headCT-LoG.pgm";
+    SavePNMImage(outImage, outPath31);
+
+    // noisy_fingerprint.pgm
+    inImage = ReadPNMImage(inPath_3);
+    outImage = CannyAlgorithm(inImage);
+    char outPath32[] = ".\\q2\\fingerprint-Canny.pgm";
+    SavePNMImage(outImage, outPath32);
+    inImage = ReadPNMImage(inPath_3);
+    outImage = LoGAlgorithm(inImage);
+    char outPath33[] = ".\\q2\\fingerprint-LoG.pgm";
+    SavePNMImage(outImage, outPath33);
+
+
+    /* Question 3 */
+    
+    // polymersomes.pgm
+    inImage = ReadPNMImage(inPath_4);
+    outImage = GlobalThresholding(inImage, 0.1);
+    char outPath40[] = ".\\q3\\polymersomes-threshold.pgm";
+    SavePNMImage(outImage, outPath40);
+    // noisy_fingerprint.pgm
+    inImage = ReadPNMImage(inPath_3);
+    outImage = GlobalThresholding(inImage, 0.1);
+    char outPath41[] = ".\\q3\\fingerprint-threshold.pgm";
+    SavePNMImage(outImage, outPath41);
+    
 
     return 0;
 }
 
+double FindThreshold(int *data, int width, int height, double threshold, double T0) {
+
+    int group_1 = 0; // sum
+    int group_2 = 0;
+    int count_1 = 0; // number
+    int count_2 = 0;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (data[i * width + j] < threshold) {
+                group_1 += data[i * width + j];
+                count_1++;
+            } else {
+                group_2 += data[i * width + j];
+                count_2++;
+            }
+        }
+    }
+
+    double avg_1 = group_1 / count_1 * 1.0;
+    double avg_2 = group_2 / count_2 * 1.0;
+    
+    double new_threshold = (avg_1 + avg_2) / 2;
+
+    if (abs(new_threshold - threshold) < T0) {
+        // Find it
+        return threshold;
+    } else {
+        // Recursive continuely
+        return FindThreshold(data, width, height, new_threshold, T0);
+    }
+}
+Image *GlobalThresholding(Image *image, double T0) {
+
+    /* Prepare data */
+    int width = image->Width;
+    int height = image->Height;
+    char comments[] = "# Global Thresholding";
+    Image *outImage = CreateNewImage(image, comments);
+    unsigned char *inData = image->data;
+    unsigned char *outData = outImage->data;
+
+    /* Initialize data */
+    int *initData = (int *)malloc(sizeof(int) * width * height);
+    for (int k = 0; k < (width * height); k++) {
+        initData[k] = inData[k];
+    }
+
+    /* Initialize threshold */
+    int initMin = *min_element(initData, initData + (width * height));
+    int initMax = *max_element(initData, initData + (width * height));
+    double initThreshold = (initMin + initMax) / 2 * 1.0;
+
+    /* Subfuntions */
+    double target_threshold = FindThreshold(initData, width, height, initThreshold, T0);
+
+    /* Apply to the image */
+    for (int k = 0; k < (width * height); k++) {
+        if (inData[k] > target_threshold) {
+            outData[k] = 255;
+        } else {
+            outData[k] = 0;
+        }
+    }
+
+    return outImage;
+}
+
+Image *LoGAlgorithm(Image *image) {
+
+    int LoGFilter[] = {
+        0, 0, -1, 0, 0,
+        0, -1, -2, -1, 0,
+        -1, -2, 16, -2, -1,
+        0, -1, -2, -1, 0,
+        0, 0, -1, 0, 0
+    };
+
+    int width = image->Width;
+    int height = image->Height;
+    char comments[] = "# LoG Algorithm";
+    Image *outImage = CreateNewImage(image, comments);
+    unsigned char *inData = image->data;
+    unsigned char *outData = outImage->data;
+
+    int *LoG_Gradients = (int *)malloc(sizeof(int) * width * height);
+    for (int k = 0; k < (width * height); k++) {
+        LoG_Gradients[k] = 0;
+    }
+
+    int filterSize = 2;
+    for (int i = filterSize; i < (height - filterSize); i++) {
+        for (int j = filterSize; j < (width -filterSize); j++) {
+
+            int LoG_gradient = 0;
+
+            for (int u = 0; u < (filterSize * 2 + 1); u++) {
+                for (int v = 0; v < (filterSize * 2 + 1); v++) {
+
+                    /* Relative location*/
+                    int relative = u * (filterSize * 2 + 1) + v;
+                    /* Absolute location */
+                    int absolute = (i-filterSize + u) * width + (j-filterSize + v);
+
+                    LoG_gradient += inData[absolute] * LoGFilter[relative];
+
+                }
+            }
+
+            LoG_Gradients[i * width + j] = LoG_gradient;
+            // printf("%d ", LoG_gradient);
+
+        }
+    }
+
+    /* Find zero crossing and apply */
+    int *zeroCrossing = ZeroCrossing(LoG_Gradients, width, height);
+    for (int k = 0; k < (width * height); k++) {
+        outData[k] = zeroCrossing[k];
+    }
+
+    return outImage;
+}
+
+int IsDifferent(int x, int y) {
+    int ret;
+    if ( ((x > 0) && (y < 0)) || ((x < 0) && (y > 0)) ) {
+        ret = 1;
+    } else {
+        ret = 0;
+    }
+    return ret;
+}
+int *ZeroCrossing(int *inData, int width, int height) {
+
+    int *outData = (int *)malloc(sizeof(int) * width * height);
+
+    /* Initialize */
+    for (int k = 0; k < (width * height); k++) {
+        outData[k] = 0;
+    }
+
+    /* Find zero crossing and apply */
+    int filterSize = 1;
+    for (int i = filterSize; i < (height - filterSize); i++) {
+        for (int j = filterSize; j < (width - filterSize); j++) {
+
+            int center = inData[i * width + j];
+            int up = inData[(i-1) * width + j];
+            int down = inData[(i+1) * width + j];
+            int left = inData[i * width + j-1];
+            int right = inData[i * width + j+1];
+            
+            if (IsDifferent(center, up)) {
+                outData[i * width + j] = 255;
+            } else if (IsDifferent(center, down)) {
+                outData[i * width + j] = 255;
+            } else if (IsDifferent(center, left)) {
+                outData[i * width + j] = 255;
+            } else if (IsDifferent(center, right)) {
+                outData[i * width + j] = 255;
+            }
+
+        }
+    }
+
+    return outData;
+}
 
 Image *CannyAlgorithm(Image *image) {
 
     Image *GaussianImage = ShowGLPF(image, 60); // Gaussian Lowpass Filter
     
-    AngleImage(image);
+    Image *CannyImage = NonmaximaSuppression(GaussianImage); // Nonmaxima Suppression
 
-    return GaussianImage;
+    return CannyImage;
 }
 
 Image *NonmaximaSuppression(Image *image) {
@@ -105,6 +349,17 @@ Image *NonmaximaSuppression(Image *image) {
     int *Gindexs = (int *)malloc(sizeof(int) * width * height);
     double *Gup = (double *)malloc(sizeof(double) * width * height);
     double *Gdown = (double *)malloc(sizeof(double) * width * height);
+    double *Gxy_NMX = (double *)malloc(sizeof(double) * width * height);
+    int *f_final = (int *)malloc(sizeof(int) * width * height);
+
+    /* Initialize*/
+    for (int k = 0; k < (width * height); k++) {
+        Gindexs[k] = 0;
+        Gup[k] = 0;
+        Gdown[k] = 0;
+        Gxy_NMX[k] = 0;
+        f_final[k] = 0;
+    }
 
     /* Determine the range of gradient direction */
     for (int i = 0; i < height; i++) {
@@ -141,8 +396,97 @@ Image *NonmaximaSuppression(Image *image) {
             double iy = Gy[i * width + j] * 1.0;
             double t = abs(iy / ix);
 
-            if (Gindexs)
+            if (Gindexs[i * width + j] == 1) {
+                Gup[i * width + j] = Gxy[i * width + j+1] * (1-t) + Gxy[(i-1) * width + j+1] * t;
+                Gdown[i * width + j] = Gxy[i * width + j-1] * (1-t) + Gxy[(i+1) * width + j-1] * t;
+            } else if (Gindexs[i * width + j] == 2) {
+                Gup[i * width + j] = Gxy[(i-1) * width + j] * (1-t) + Gxy[(i-1) * width + j+1] * t;
+                Gdown[i * width + j] = Gxy[(i+1) * width + j] * (1-t) + Gxy[(i+1) * width + j-1] * t;
+            } else if (Gindexs[i * width + j] == 3) {
+                Gup[i * width + j] = Gxy[(i-1) * width + j] * (1-t) + Gxy[(i-1) * width + j-1] * t;
+                Gdown[i * width + j] = Gxy[(i+1) * width + j] * (1-t) + Gxy[(i+1) * width + j+1] * t;
+            } else if (Gindexs[i * width + j] == 4) {
+                Gup[i * width + j] = Gxy[i * width + j-1] * (1-t) + Gxy[(i-1) * width + j-1] * t;
+                Gdown[i * width + j] = Gxy[i * width + j+1] * (1-t) + Gxy[(i+1) * width + j+1] * t;
+            }
 
+        }
+    }
+
+    /* Determine whether it is the maximum value of gradient direction */
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if ((Gxy[i * width + j] >= Gup[i * width + j]) && (Gxy[i * width + j] >= Gdown[i * width + j])) {
+                Gxy_NMX[i * width + j] = Gxy[i * width + j];
+            }
+        }
+    }
+
+    int Tl = 15;
+    int Th = 35;
+    int connectNum = 1;
+
+    for (int i = 1; i < height - 1; i++) {
+        for (int j = 1; j < width - 1; j++) {
+            if (Gxy_NMX[i * width + j] >= Th) {
+                /* Threshold High */
+                f_final[i * width + j] = 1;
+            } else if (Gxy_NMX[i * width + j] <= Tl) {
+                /* Threshold Low */
+                f_final[i * width + j] = 0;
+            } else {
+                /* Weak edges */
+                int count = 0;
+                if (Gxy_NMX[(i-1) * width + j-1] != 0) {
+                    /* lu */
+                    count++;
+                }
+                if (Gxy_NMX[(i-1) * width + j] != 0) {
+                    /* u */
+                    count++;
+                }
+                if (Gxy_NMX[(i-1) * width + j+1] != 0) {
+                    /* ru */
+                    count++;
+                }
+                if (Gxy_NMX[i * width + j-1] != 0) {
+                    /* l */
+                    count++;
+                }
+                if (Gxy_NMX[i * width + j] != 0) {
+                    /* c */
+                    count++;
+                }
+                if (Gxy_NMX[i * width + j+1] != 0) {
+                    /* r */
+                    count++;
+                }
+                if (Gxy_NMX[(i+1) * width + j-1] != 0) {
+                    /* ld */
+                    count++;
+                }
+                if (Gxy_NMX[(i+1) * width + j] != 0) {
+                    /* d */
+                    count++;
+                }
+                if (Gxy_NMX[(i+1) * width + j+1] != 0) {
+                    /* rd */
+                    count++;
+                }
+                /* If a weak edge is not isolated, it is an edge */
+                if (count >= connectNum) {
+                    f_final[i * width + j] = 1;
+                }
+            }
+        }
+    }
+
+    /* Store as an image */
+    for (int k = 0; k < (width * height); k++) {
+        if (f_final[k] == 1) {
+            outData[k] = 255;
+        } else {
+            outData[k] = 0;
         }
     }
 
@@ -192,12 +536,29 @@ Image *ShowGLPF(Image *image, int d) {
     double *imageData = Image2Double(image, width, height);
     imageData = CenterTranslation(imageData, width, height);
     Complex *imageArr = DFT(imageData, width, height);
+    // double *retArr = FourierSpectrum(imageArr, width, height);
     imageArr = GLPF(imageArr, width, height, d); // Pass Filter
     double *retArr = IDFT(imageArr, width, height);
     retArr = CenterTranslation(retArr, width, height);
     Image *outputImage = GenerateImage(image, retArr, width, height);
     
     return outputImage;
+}
+double *FourierSpectrum(Complex *imageArr, int width, int height) {
+    
+    double *outputArr = (double *)malloc(sizeof(double) * width * height);
+
+    int enhance = 100;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            double real = imageArr[i * width + j].real;
+            double imag = imageArr[i * width + j].imag;
+            outputArr[i * width + j] = sqrt(real * real + imag * imag) * enhance;
+        }
+    }
+
+    return outputArr;   
 }
 Image *GenerateImage(Image *image, double *imageArr, int width, int height) {
     
@@ -220,8 +581,8 @@ Image *GenerateImage(Image *image, double *imageArr, int width, int height) {
     return outImage;
 }
 double *CenterTranslation(double *imageArr, int width, int height) {
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
             imageArr[i * width + j] = round(imageArr[i * width + j] * pow(-1, i + j));
         }
     }
@@ -235,34 +596,15 @@ double *Image2Double(Image *image, int width, int height) {
     }
     return retArr;
 }
-Complex *GHPF(Complex *imageArr, int width, int height, int d) {
-
-    double e = 2.718281828;
-
-    double center_x = width / double(2);
-    double center_y = height / double(2);
-
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-            double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
-            double H = pow(e, (-1) * (pow(D, 2) / (2 * pow(d, 2))));
-            H = 1 - H;
-            imageArr[i * width + j].real *= H;
-            imageArr[i * width + j].imag *= H;
-        }
-    }
-    
-    return imageArr;
-}
 Complex *GLPF(Complex *imageArr, int width, int height, int d) {
 
     double e = 2.718281828;
 
-    double center_x = width / double(2);
-    double center_y = height / double(2);
+    double center_x = height / double(2);
+    double center_y = width / double(2);
 
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
             double D = sqrt(pow(center_x-i, 2) + pow(center_y-j, 2));
             double H = pow(e, (-1) * (pow(D, 2) / (2 * pow(d, 2))));
             imageArr[i * width + j].real *= H;
@@ -278,38 +620,35 @@ Complex *DFT(double *imageArr, int width, int height) {
     Complex *t = (Complex *)malloc(sizeof(Complex) * width * height);
     Complex *g = (Complex *)malloc(sizeof(Complex) * width * height);
 
-    int rows = height;
-    int cols = width;
-
     printf("Starting DFT ...\n");
 
     // DFT for cols
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int m = 0; m < rows; m++) {
-                double theta = double(-2) * PI * (i * m) / rows;
-                t[i * rows + j].real += imageArr[m * rows + j] * cos(theta);
-                t[i * rows + j].imag += imageArr[m * rows + j] * sin(theta);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            for (int m = 0; m < height; m++) {
+                double theta = double(-2) * PI * (i * m) / height;
+                t[i * width + j].real += imageArr[m * width + j] * cos(theta);
+                t[i * width + j].imag += imageArr[m * width + j] * sin(theta);
             }
         }
     }
 
     // DFT for rows
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int n = 0; n < cols; n++) {
-                double theta = double(-2) * PI * (j * n) / cols;
-                g[i * rows + j].real += t[i * rows + n].real * cos(theta) - t[i * rows + n].imag * sin(theta);
-                g[i * rows + j].imag += t[i * rows + n].real * sin(theta) + t[i * rows + n].imag * cos(theta);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            for (int n = 0; n < width; n++) {
+                double theta = double(-2) * PI * (j * n) / width;
+                g[i * width + j].real += t[i * width + n].real * cos(theta) - t[i * width + n].imag * sin(theta);
+                g[i * width + j].imag += t[i * width + n].real * sin(theta) + t[i * width + n].imag * cos(theta);
             }
         }
     }
 
     // Divide by image size
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            g[i * rows + j].real /= rows * cols;
-            g[i * rows + j].imag /= rows * cols;
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            g[i * width + j].real /= height * width;
+            g[i * width + j].imag /= height * width;
         }
     }
 
@@ -322,28 +661,25 @@ double *IDFT(Complex *imageArr, int width, int height) {
     Complex *t = (Complex *)malloc(sizeof(Complex) * width * height);
     double *g = (double *)malloc(sizeof(double) * width * height);
 
-    int rows = height;
-    int cols = width;
-
     printf("Starting IDFT ...\n");
 
     // IDFT for cols
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int m = 0; m < rows; m++) {
-                double theta = double(2) * PI * (i * m) / rows;
-                t[i * rows + j].real += imageArr[m * rows + j].real * cos(theta) - imageArr[m * rows + j].imag * sin(theta);
-                t[i * rows + j].imag += imageArr[m * rows + j].real * sin(theta) + imageArr[m * rows + j].imag * cos(theta);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            for (int m = 0; m < height; m++) {
+                double theta = double(2) * PI * (i * m) / height;
+                t[i * width + j].real += imageArr[m * width + j].real * cos(theta) - imageArr[m * width + j].imag * sin(theta);
+                t[i * width + j].imag += imageArr[m * width + j].real * sin(theta) + imageArr[m * width + j].imag * cos(theta);
             }
         }
     }
 
     // IDFT for rows
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            for (int n = 0; n < cols; n++) {
-                double theta = double(2) * PI * (j * n) / cols;
-                g[i * rows + j] += t[i * rows + n].real * cos(theta) - t[i * rows + n].imag * sin(theta);
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            for (int n = 0; n < width; n++) {
+                double theta = double(2) * PI * (j * n) / width;
+                g[i * width + j] += t[i * width + n].real * cos(theta) - t[i * width + n].imag * sin(theta);
             }
         }
     }
@@ -376,7 +712,7 @@ Image *GetGradientImage(Image *image, int type) {
     /* Create the gradient G = Gx + Gy */
     int *G = (int *)malloc(sizeof(int) * width * height);
 
-    /* Compute |Gx| and |Gy|, then, Normalization */
+    /* Compute |Gx| and |Gy| */
     for (int k = 0; k < (width * height); k++) {
         if (Gx[k] < 0) {
             Gx[k] = -Gx[k];
@@ -386,12 +722,12 @@ Image *GetGradientImage(Image *image, int type) {
         }
         G[k] = Gx[k] + Gy[k]; // approximate the magnitude of the gradient
     }
-    int min = *min_element(G, G + (width * height));
-    int max = *max_element(G, G + (width * height));
-    int scale = (max - min) / 255;
+
+    /* Threshold */
+    int *zeroCrossing = ZeroCrossing(G, width, height);
     for (int k = 0; k < (width * height); k++) {
-        G[k] = (G[k] - min) / scale;
-        outData[k] = G[k];
+        // outData[k] = zeroCrossing[k];
+        outData[k] = Threshold(G[k], 50);
     }
 
     return outImage;
