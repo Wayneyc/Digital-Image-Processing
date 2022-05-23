@@ -1,0 +1,90 @@
+Image *Erosion(Image *image)
+{
+    unsigned char *tempin, *tempout;
+    int i, j, k, t, s, stop;
+    Image *outimage;
+    double mask[9] = {0, 1, 0, 1, 0, 1, 0, 1, 0};
+
+    outimage = CreateNewImage(image, "#testing Swap");
+    tempin = image->data;
+    tempout = outimage->data;
+
+    for (i = 0; i < image->Height; ++i)
+    {
+        for (j = 0; j < image->Width; ++j)
+        {
+            if (i == 0 || i == image->Height || j == 0 || j == image->Width)
+            {
+                tempout[image->Width * i + j] = tempin[image->Width * i + j];
+            }
+            else
+            {
+                s = 0;
+                stop = 0;
+                for (k = -1; k <= 1 && stop == 0; ++k)
+                    for (t = -1; t <= 1 && stop == 0; ++t)
+                    {
+                        if (tempin[image->Width * (i + k) + (j + t)] == 0 && mask[s++] == 1)
+                        {
+                            tempout[image->Width * i + j] = 0;
+                            stop = 1;
+                        }
+                    }
+                if (stop == 0)
+                    tempout[image->Width * i + j] = tempin[image->Width * i + j];
+            }
+        }
+    }
+    return (outimage);
+}
+
+Image *RegionGrowing(Image *image, int th)
+{
+    unsigned char *tempin, *tempout;
+    int i, j, k, t, s, stop, count;
+    Image *outimage;
+    FILE *fp;
+    int sign = 0;
+
+    outimage = CreateNewImage(image, "# testing Swap");
+    tempin = image->data;
+    tempout = outimage->data;
+
+    for (i = 0; i < image->Height; ++i)
+    {
+        for (j = 0; j < image->Width; ++j)
+        {
+            if (tempin[image->Width * i + j] > th)
+                tempout[image->Width * i + j] = 255;
+            else
+                tempout[image->Width * i + j] = 0;
+        }
+    }
+
+    outimage = Erosion(outimage);
+
+    for (i = 0; i < image->Height; ++i)
+    {
+        for (j = 0; j < image->Width; ++j)
+        {
+            tempout[image->Width * i + j] = abs(tempout[image->Width * i + j] - tempin[image->Width * i + j]);
+        }
+    }
+
+    for (i = 0; i < image->Height; ++i)
+    {
+        for (j = 0; j < image->Width; ++j)
+        {
+            if (abs(tempout[image->Width * i + j] - tempin[image->Width * i + j]) > 68)
+            {
+                tempout[image->Width * i + j] = 0;
+            }
+            else
+            {
+                tempout[image->Width * i + j] = 255;
+            }
+        }
+    }
+
+    return (outimage);
+}

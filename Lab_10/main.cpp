@@ -38,7 +38,7 @@ Image *CreateImageByDouble(Image *targetImage, double *sourseData);
 Image *otsuAlgorithm(Image *image);
 Image *PartitionOTSU(Image *image, int row, int col);
 Image *MovingAverageThreshold(Image *image, int n, int b);
-Image *RegionGrowing(Image *image, int th);
+Image *RegionGrowing(Image *image, int seedThreshold, int threshold, int stop);
 
 int main()
 {
@@ -78,106 +78,178 @@ int main()
     char inPath4[] = ".\\defective_weld.pgm";
     char inPath5[] = ".\\noisy_region.pgm";
     inImage4 = ReadPNMImage(inPath4);
-    outImage4 = RegionGrowing(inImage4, 180);
+    outImage4 = RegionGrowing(inImage4, 254, 10, 10);
     char outPath5[] = ".\\4-RG-weld.pgm";
     SavePNMImage(outImage4, outPath5);
-    inImage4 = ReadPNMImage(inPath5);
-    outImage4 = RegionGrowing(inImage4, 170);
-    char outPath6[] = ".\\4-RG-noisy.pgm";
-    SavePNMImage(outImage4, outPath6);
+    // inImage4 = ReadPNMImage(inPath5);
+    // outImage4 = RegionGrowing(inImage4, 170);
+    // char outPath6[] = ".\\4-RG-noisy.pgm";
+    // SavePNMImage(outImage4, outPath6);
 
     return 0;
 }
 
-Image *Erosion(Image *image)
-{
-    unsigned char *tempin, *tempout;
-    int i, j, k, t, s, stop;
-    Image *outimage;
-    double mask[9] = {0, 1, 0, 1, 0, 1, 0, 1, 0};
+int WhiteOrBlack(int x) {
+    if (x >= 128) {
+        return 1; // White
+    } else {
+        return 0; // Black
+    }
+}
+int CountingSubFunction(Image *image, int i, int j, int i0, int j0, int count, int indexOfBlock, int *seeds) {
 
-    outimage = CreateNewImage(image, "#testing Swap");
-    tempin = image->data;
-    tempout = outimage->data;
+    int width = image->Width;
+    int height = image->Height;
+    unsigned char *dataset = image->data;
 
-    for (i = 0; i < image->Height; ++i)
-    {
-        for (j = 0; j < image->Width; ++j)
-        {
-            if (i == 0 || i == image->Height || j == 0 || j == image->Width)
-            {
-                tempout[image->Width * i + j] = tempin[image->Width * i + j];
-            }
-            else
-            {
-                s = 0;
-                stop = 0;
-                for (k = -1; k <= 1 && stop == 0; ++k)
-                    for (t = -1; t <= 1 && stop == 0; ++t)
-                    {
-                        if (tempin[image->Width * (i + k) + (j + t)] == 0 && mask[s++] == 1)
-                        {
-                            tempout[image->Width * i + j] = 0;
-                            stop = 1;
-                        }
-                    }
-                if (stop == 0)
-                    tempout[image->Width * i + j] = tempin[image->Width * i + j];
+    /* Two situations */
+    int newline = 0;
+    int bottom = 0;
+
+    // It need newline
+    if (j + 1 >= width) {
+        newline = 1;
+    } else if (WhiteOrBlack(dataset[i * width + j + 1]) == 0) {
+        newline = 1;
+    }
+    // It will be bottom
+    if (i + 1 >= height) {
+        bottom = 1;
+    } else if (WhiteOrBlack(dataset[(i + 1) * width + j]) == 0) {
+        bottom = 1;
+    }
+    // Clear white connected component
+    if (WhiteOrBlack(dataset[i * width + j]) == 1) {
+        count++;
+        dataset[i * width + j] = 0;
+        seeds[i * width + j] = indexOfBlock;
+        // printf("%d ", indexOfBlock);
+    }
+
+    /* Recursion */
+    if (bottom == 1) {
+        return count;
+    } else if (newline == 1) {
+        return CountingSubFunction(image, i+1, j0, i0, j0, count, indexOfBlock, seeds);
+    } else {
+        return CountingSubFunction(image, i, j+1, i0, j0, count, indexOfBlock, seeds);
+    }
+}
+void CountNumberOfPixel(Image *inImage, int *countTable, int *index, int *seeds) {
+
+    printf("Counting...\n");
+
+    unsigned char *inData, *outData;
+    int width = inImage->Width;
+    int height = inImage->Height;
+    char comments[] = "# Temporary image";
+    Image *outImage = CreateNewImage(inImage, comments);
+    inData = inImage->data;
+    outData = outImage->data;
+
+    // int *countTable = (int *)malloc(sizeof(int) * width * height);
+    // int index = 0;
+
+    for (int k = 0; k < (width * height); k++) {
+        countTable[k] = 0;
+        outData[k] = inData[k];
+    }
+    
+    int indexOfBlock = 1;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            if (WhiteOrBlack(outData[i * width + j]) == 1) {
+                /* It's white */
+                countTable[*index] = CountingSubFunction(outImage, i, j, i, j, 0, indexOfBlock, seeds);
+                (*index)++;
+                indexOfBlock++;
+                printf("Seed: %d\n", seeds[i * width + j]);
             }
         }
     }
-    return (outimage);
+
+    int lineOfCountTable = *index;
+    for (int k = 0; k < lineOfCountTable; k++) {
+        // printf("%d: %d \n", k+1, countTable[k]);
+    }
 }
 
-Image *RegionGrowing(Image *image, int th)
-{
-    unsigned char *tempin, *tempout;
-    int i, j, k, t, s, stop, count;
-    Image *outimage;
-    FILE *fp;
-    int sign = 0;
+Image *erode(Image *image, int blockSize) {
 
-    outimage = CreateNewImage(image, "# testing Swap");
-    tempin = image->data;
-    tempout = outimage->data;
+    int width = image->Width;
+    int height = image->Height;
+    unsigned char *data = image->data;
 
-    for (i = 0; i < image->Height; ++i)
-    {
-        for (j = 0; j < image->Width; ++j)
-        {
-            if (tempin[image->Width * i + j] > th)
-                tempout[image->Width * i + j] = 255;
-            else
-                tempout[image->Width * i + j] = 0;
+    int *seeds = (int *)malloc(sizeof(int) * width * height);
+    for (int k = 0; k < (width * height); k++) {
+        seeds[k] = 0;
+    }
+
+    int *countTable = (int *)malloc(sizeof(int) * width * height);
+    int index = 0;
+
+    CountNumberOfPixel(image, countTable, &index, seeds);
+
+    for (int n = 0; n < (width * height); n++) {
+        data[n] = 0;
+    }
+
+    int numOfSeeds = 0;
+
+    for (int k = 0; k < index; k++) {
+        if (countTable[k] > blockSize) {
+            numOfSeeds++;
         }
     }
 
-    outimage = Erosion(outimage);
+    int *locationOfSeeds = (int *)malloc(sizeof(int) * numOfSeeds);
+    int indexOfLocation = 0;
 
-    for (i = 0; i < image->Height; ++i)
-    {
-        for (j = 0; j < image->Width; ++j)
-        {
-            tempout[image->Width * i + j] = abs(tempout[image->Width * i + j] - tempin[image->Width * i + j]);
-        }
-    }
-
-    for (i = 0; i < image->Height; ++i)
-    {
-        for (j = 0; j < image->Width; ++j)
-        {
-            if (abs(tempout[image->Width * i + j] - tempin[image->Width * i + j]) > 68)
-            {
-                tempout[image->Width * i + j] = 0;
-            }
-            else
-            {
-                tempout[image->Width * i + j] = 255;
+    /* There is problem! */
+    for (int k = 0; k < index; k++) {
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                if ((seeds[i * width + j] == k + 1) && (countTable[k] > blockSize)) {
+                    locationOfSeeds[indexOfLocation] = i * width + j;
+                    indexOfLocation++;
+                }
             }
         }
     }
 
-    return (outimage);
+    for (int k = 0; k < indexOfLocation; k++) {
+        data[locationOfSeeds[k]] = 255;
+    }
+
+    return image;
+}
+Image *RegionGrowing(Image *image, int seedThreshold, int threshold, int stop) {
+
+    int width = image->Width;
+    int height = image->Height;
+
+    unsigned char *inData, *outData;
+    Image *outImage = CreateNewImage(image, "# Seed space");
+    inData = image->data;
+    outData = outImage->data;
+
+    /* Find the siginifcantly bright place */
+    for (int i = 0; i < height; i++)
+    {
+        for (int j = 0; j < width; j++)
+        {
+            if (inData[width * i + j] > seedThreshold) {
+                outData[image->Width * i + j] = 255;
+            } else {
+                outData[image->Width * i + j] = 0;
+            }
+        }
+    }
+
+    erode(outImage, 9);
+
+    return outImage;
 }
 
 Image *MovingAverageThreshold(Image *image, int n, int b)
